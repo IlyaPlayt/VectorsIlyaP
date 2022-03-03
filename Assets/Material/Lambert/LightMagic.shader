@@ -6,7 +6,10 @@ Shader "Unlit/LightMagic"
     }
     SubShader
     {
-        Tags { "RenderType"="Opaque" }
+        Tags
+        {
+            "RenderType"="ForwardBase"
+        }
         LOD 100
 
         Pass
@@ -22,35 +25,29 @@ Shader "Unlit/LightMagic"
             struct appdata
             {
                 float4 vertex : POSITION;
-                float2 uv : TEXCOORD0;
+                float3 normal: NORMAL;
             };
 
             struct v2f
             {
-                float2 uv : TEXCOORD0;
-                UNITY_FOG_COORDS(1)
                 float4 vertex : SV_POSITION;
+                float4 color: COLOR;
             };
 
-            sampler2D _MainTex;
-            float4 _MainTex_ST;
 
-            v2f vert (appdata v)
+            v2f vert(appdata v)
             {
                 v2f o;
                 o.vertex = UnityObjectToClipPos(v.vertex);
-                o.uv = TRANSFORM_TEX(v.uv, _MainTex);
-                UNITY_TRANSFER_FOG(o,o.vertex);
+                float3 lightDirection = normalize(_WorldSpaceLightPos0.xyz);
+                o.color.rgba = dot(v.normal, lightDirection);
+
                 return o;
             }
 
-            fixed4 frag (v2f i) : SV_Target
+            fixed4 frag(v2f i) : SV_Target
             {
-                // sample the texture
-                fixed4 col = tex2D(_MainTex, i.uv);
-                // apply fog
-                UNITY_APPLY_FOG(i.fogCoord, col);
-                return col;
+                return i.color;
             }
             ENDCG
         }
